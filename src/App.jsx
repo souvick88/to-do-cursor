@@ -9,6 +9,8 @@ function App() {
     const [inputValue, setInputValue] = useState('')
     const [filter, setFilter] = useState('all')
     const [sortBy, setSortBy] = useState('date')
+    const [editingId, setEditingId] = useState(null)
+    const [editValue, setEditValue] = useState('')
 
     useEffect(() => {
         localStorage.setItem('todos', JSON.stringify(todos))
@@ -41,6 +43,33 @@ function App() {
 
     const clearCompleted = () => {
         setTodos(todos.filter(todo => !todo.completed))
+    }
+
+    const startEditing = (id, text) => {
+        setEditingId(id)
+        setEditValue(text)
+    }
+
+    const saveEdit = (id) => {
+        if (editValue.trim() === '') return
+        setTodos(todos.map(todo =>
+            todo.id === id ? { ...todo, text: editValue.trim() } : todo
+        ))
+        setEditingId(null)
+        setEditValue('')
+    }
+
+    const cancelEdit = () => {
+        setEditingId(null)
+        setEditValue('')
+    }
+
+    const handleEditKeyPress = (e, id) => {
+        if (e.key === 'Enter') {
+            saveEdit(id)
+        } else if (e.key === 'Escape') {
+            cancelEdit()
+        }
     }
 
     const completedCount = todos.filter(todo => todo.completed).length
@@ -133,20 +162,60 @@ function App() {
                         <p className="empty-state">No todos match the current filter.</p>
                     ) : (
                         filteredTodos.map(todo => (
-                            <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
+                            <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${editingId === todo.id ? 'editing' : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={todo.completed}
                                     onChange={() => toggleTodo(todo.id)}
                                     className="todo-checkbox"
+                                    disabled={editingId === todo.id}
                                 />
-                                <span className="todo-text">{todo.text}</span>
-                                <button
-                                    onClick={() => deleteTodo(todo.id)}
-                                    className="delete-button"
-                                >
-                                    ×
-                                </button>
+                                {editingId === todo.id ? (
+                                    <div className="edit-container">
+                                        <input
+                                            type="text"
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            onKeyDown={(e) => handleEditKeyPress(e, todo.id)}
+                                            className="edit-input"
+                                            autoFocus
+                                        />
+                                        <div className="edit-buttons">
+                                            <button
+                                                onClick={() => saveEdit(todo.id)}
+                                                className="save-button"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                onClick={cancelEdit}
+                                                className="cancel-button"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="todo-text" onDoubleClick={() => startEditing(todo.id, todo.text)}>
+                                            {todo.text}
+                                        </span>
+                                        <div className="todo-actions">
+                                            <button
+                                                onClick={() => startEditing(todo.id, todo.text)}
+                                                className="edit-button"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => deleteTodo(todo.id)}
+                                                className="delete-button"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ))
                     )}
