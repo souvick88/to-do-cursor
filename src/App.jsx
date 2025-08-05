@@ -7,6 +7,10 @@ function App() {
         return savedTodos ? JSON.parse(savedTodos) : []
     })
     const [inputValue, setInputValue] = useState('')
+    const [filter, setFilter] = useState('all')
+    const [sortBy, setSortBy] = useState('date')
+    const [editingId, setEditingId] = useState(null)
+    const [editValue, setEditValue] = useState('')
 
     useEffect(() => {
         localStorage.setItem('todos', JSON.stringify(todos))
@@ -41,8 +45,60 @@ function App() {
         setTodos(todos.filter(todo => !todo.completed))
     }
 
+    const startEditing = (id, text) => {
+        setEditingId(id)
+        setEditValue(text)
+    }
+
+    const saveEdit = (id) => {
+        if (editValue.trim() === '') return
+        setTodos(todos.map(todo =>
+            todo.id === id ? { ...todo, text: editValue.trim() } : todo
+        ))
+        setEditingId(null)
+        setEditValue('')
+    }
+
+    const cancelEdit = () => {
+        setEditingId(null)
+        setEditValue('')
+    }
+
+    const handleEditKeyPress = (e, id) => {
+        if (e.key === 'Enter') {
+            saveEdit(id)
+        } else if (e.key === 'Escape') {
+            cancelEdit()
+        }
+    }
+
     const completedCount = todos.filter(todo => todo.completed).length
     const activeCount = todos.length - completedCount
+
+    const getFilteredTodos = () => {
+        let filtered = todos
+        
+        switch (filter) {
+            case 'active':
+                filtered = todos.filter(todo => !todo.completed)
+                break
+            case 'completed':
+                filtered = todos.filter(todo => todo.completed)
+                break
+            default:
+                filtered = todos
+        }
+
+        return filtered.sort((a, b) => {
+            if (sortBy === 'alphabetical') {
+                return a.text.localeCompare(b.text)
+            } else {
+                return new Date(b.createdAt) - new Date(a.createdAt)
+            }
+        })
+    }
+
+    const filteredTodos = getFilteredTodos()
 
     return (
         <div className="app">
@@ -62,25 +118,104 @@ function App() {
                     </button>
                 </form>
 
+                {todos.length > 0 && (
+                    <div className="controls">
+                        <div className="filter-buttons">
+                            <button
+                                className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                                onClick={() => setFilter('all')}
+                            >
+                                All ({todos.length})
+                            </button>
+                            <button
+                                className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+                                onClick={() => setFilter('active')}
+                            >
+                                Active ({activeCount})
+                            </button>
+                            <button
+                                className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+                                onClick={() => setFilter('completed')}
+                            >
+                                Completed ({completedCount})
+                            </button>
+                        </div>
+                        <div className="sort-controls">
+                            <label htmlFor="sort-select">Sort by:</label>
+                            <select
+                                id="sort-select"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="sort-select"
+                            >
+                                <option value="date">Date (newest first)</option>
+                                <option value="alphabetical">Alphabetical</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+
                 <div className="todo-list">
                     {todos.length === 0 ? (
                         <p className="empty-state">No todos yet. Add one above!</p>
+                    ) : filteredTodos.length === 0 ? (
+                        <p className="empty-state">No todos match the current filter.</p>
                     ) : (
-                        todos.map(todo => (
-                            <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
+                        filteredTodos.map(todo => (
+                            <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''} ${editingId === todo.id ? 'editing' : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={todo.completed}
                                     onChange={() => toggleTodo(todo.id)}
                                     className="todo-checkbox"
+                                    disabled={editingId === todo.id}
                                 />
-                                <span className="todo-text">{todo.text}</span>
-                                <button
-                                    onClick={() => deleteTodo(todo.id)}
-                                    className="delete-button"
-                                >
-                                    ×
-                                </button>
+                                {editingId === todo.id ? (
+                                    <div className="edit-container">
+                                        <input
+                                            type="text"
+                                            value={editValue}
+                                            onChange={(e) => setEditValue(e.target.value)}
+                                            onKeyDown={(e) => handleEditKeyPress(e, todo.id)}
+                                            className="edit-input"
+                                            autoFocus
+                                        />
+                                        <div className="edit-buttons">
+                                            <button
+                                                onClick={() => saveEdit(todo.id)}
+                                                className="save-button"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                onClick={cancelEdit}
+                                                className="cancel-button"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="todo-text" onDoubleClick={() => startEditing(todo.id, todo.text)}>
+                                            {todo.text}
+                                        </span>
+                                        <div className="todo-actions">
+                                            <button
+                                                onClick={() => startEditing(todo.id, todo.text)}
+                                                className="edit-button"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => deleteTodo(todo.id)}
+                                                className="delete-button"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         ))
                     )}
