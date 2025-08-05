@@ -29,6 +29,64 @@
     border-bottom: 1px solid #f0f0f0;
 }
 
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e1e5e9;
+    gap: 20px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    border: 1px solid #e1e5e9;
+    background: white;
+    color: #666;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-controls label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.sort-select {
+    padding: 4px 8px;
+    border: 1px solid #e1e5e9;
+    border-radius: 4px;
+    background: white;
+    color: #666;
+    font-size: 13px;
+    cursor: pointer;
+}
+
 .todo-input {
     flex: 1;
     padding: 12px 16px;
@@ -201,6 +259,21 @@
     }
 
     .todo-stats {
+        justify-content: center;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .filter-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .sort-controls {
         justify-content: center;
     }
 }

@@ -7,6 +7,8 @@ function App() {
         return savedTodos ? JSON.parse(savedTodos) : []
     })
     const [inputValue, setInputValue] = useState('')
+    const [filter, setFilter] = useState('all')
+    const [sortBy, setSortBy] = useState('date')
 
     useEffect(() => {
         localStorage.setItem('todos', JSON.stringify(todos))
@@ -44,6 +46,31 @@ function App() {
     const completedCount = todos.filter(todo => todo.completed).length
     const activeCount = todos.length - completedCount
 
+    const getFilteredTodos = () => {
+        let filtered = todos
+        
+        switch (filter) {
+            case 'active':
+                filtered = todos.filter(todo => !todo.completed)
+                break
+            case 'completed':
+                filtered = todos.filter(todo => todo.completed)
+                break
+            default:
+                filtered = todos
+        }
+
+        return filtered.sort((a, b) => {
+            if (sortBy === 'alphabetical') {
+                return a.text.localeCompare(b.text)
+            } else {
+                return new Date(b.createdAt) - new Date(a.createdAt)
+            }
+        })
+    }
+
+    const filteredTodos = getFilteredTodos()
+
     return (
         <div className="app">
             <div className="todo-container">
@@ -62,11 +89,50 @@ function App() {
                     </button>
                 </form>
 
+                {todos.length > 0 && (
+                    <div className="controls">
+                        <div className="filter-buttons">
+                            <button
+                                className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                                onClick={() => setFilter('all')}
+                            >
+                                All ({todos.length})
+                            </button>
+                            <button
+                                className={`filter-btn ${filter === 'active' ? 'active' : ''}`}
+                                onClick={() => setFilter('active')}
+                            >
+                                Active ({activeCount})
+                            </button>
+                            <button
+                                className={`filter-btn ${filter === 'completed' ? 'active' : ''}`}
+                                onClick={() => setFilter('completed')}
+                            >
+                                Completed ({completedCount})
+                            </button>
+                        </div>
+                        <div className="sort-controls">
+                            <label htmlFor="sort-select">Sort by:</label>
+                            <select
+                                id="sort-select"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="sort-select"
+                            >
+                                <option value="date">Date (newest first)</option>
+                                <option value="alphabetical">Alphabetical</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+
                 <div className="todo-list">
                     {todos.length === 0 ? (
                         <p className="empty-state">No todos yet. Add one above!</p>
+                    ) : filteredTodos.length === 0 ? (
+                        <p className="empty-state">No todos match the current filter.</p>
                     ) : (
-                        todos.map(todo => (
+                        filteredTodos.map(todo => (
                             <div key={todo.id} className={`todo-item ${todo.completed ? 'completed' : ''}`}>
                                 <input
                                     type="checkbox"
